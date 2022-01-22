@@ -1,26 +1,26 @@
-var isCtrlPressed = false;
+let isCtrlPressed = false;
 const CTRL_KEY_CODE = 17;
 const SPACE_KEY_CODE = 32;
 const resetTimeoutTimeInMs = 2500;
-var resetTimeoutID;
+let resetTimeoutID;
 
 function keyDownEvent(e) {
-    var keyid = e.keyCode;
-    if (keyid === CTRL_KEY_CODE) {
+    const keyCode = e.keyCode;
+    if (keyCode === CTRL_KEY_CODE) {
         isCtrlPressed = true;
         resetAfterTimeout();
     }
 }
 
 function keyUpEvent(e) {
-    var keyid = e.keyCode;
-    if (keyid === CTRL_KEY_CODE) {
+    const keyCode = e.keyCode;
+    if (keyCode === CTRL_KEY_CODE) {
         setTimeout(() => {
             resetIsCtrlPressed();
         }, 150);
     }
 
-    if (keyid === SPACE_KEY_CODE && isCtrlPressed === true) {
+    if (keyCode === SPACE_KEY_CODE && isCtrlPressed === true) {
         const bar = getSearchBarElement();
         if (bar) {
             bar.focus();
@@ -32,11 +32,7 @@ function keyUpEvent(e) {
 
 function getVisibleSearchBarElement(selector) {
     let nodes = document.querySelectorAll(selector);
-    return Array.from(nodes).find(e => {
-        const ariaHidden = e.attributes["aria-hidden"];
-        const displayNotNone = e.style.display !== 'none';
-        return displayNotNone && (ariaHidden === undefined || ariaHidden.value === 'false');
-    })
+    return Array.from(nodes).find(e => checkDisplayNotNone(e) && checkAreNotHidden(e));
 }
 
 function getSearchBarElement() {
@@ -48,6 +44,15 @@ function getSearchBarElement() {
         bar = getVisibleSearchBarElement('[autocomplete="off"]');
     }
     return bar;
+}
+
+function checkAreNotHidden(e) {
+    const ariaHidden = e.attributes["aria-hidden"];
+    return (ariaHidden === undefined || ariaHidden.value === 'false');
+}
+
+function checkDisplayNotNone(e) {
+    return e.style.display !== 'none';
 }
 
 function resetAfterTimeout() {
