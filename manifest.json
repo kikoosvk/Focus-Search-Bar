@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Focus Search Bar",
   "description": "Focus Search Bar extension will focus the search bar element on a website after pressing the keyboard shortcut CTRL + SPACE.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "short_name": "FSB",
   "icons": {
     "16": "img/icon/icon16.png",

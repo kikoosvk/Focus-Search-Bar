@@ -1,26 +1,28 @@
 let isCtrlPressed = false;
-const CTRL_KEY_CODE = 17;
-const SPACE_KEY_CODE = 32;
+const CTRL_KEY = 'Control';
+const SPACE_KEY_CODE = 'Space';
 const resetTimeoutTimeInMs = 2500;
 let resetTimeoutID;
 
 function keyDownEvent(e) {
-    const keyCode = e.keyCode;
-    if (keyCode === CTRL_KEY_CODE) {
+    if (e.key === CTRL_KEY) {
         isCtrlPressed = true;
         resetAfterTimeout();
+        return;
+    }
+    if (e.code === SPACE_KEY_CODE && e.ctrlKey) {
+        e.preventDefault();
     }
 }
 
 function keyUpEvent(e) {
-    const keyCode = e.keyCode;
-    if (keyCode === CTRL_KEY_CODE) {
+    if (e.key === CTRL_KEY) {
         setTimeout(() => {
-            resetIsCtrlPressed();
+            resetIsCtrlPressedTimeout();
         }, 150);
+        return;
     }
-
-    if (keyCode === SPACE_KEY_CODE && isCtrlPressed === true) {
+    if (e.code === SPACE_KEY_CODE && isCtrlPressed === true) {
         const bar = getSearchBarElement();
         if (bar) {
             bar.focus();
@@ -28,11 +30,6 @@ function keyUpEvent(e) {
         }
         isCtrlPressed = false;
     }
-}
-
-function getVisibleSearchBarElement(selector) {
-    let nodes = document.querySelectorAll(selector);
-    return Array.from(nodes).find(e => checkDisplayNotNone(e) && checkAreNotHidden(e));
 }
 
 function getSearchBarElement() {
@@ -44,6 +41,11 @@ function getSearchBarElement() {
         bar = getVisibleSearchBarElement('[autocomplete="off"]');
     }
     return bar;
+}
+
+function getVisibleSearchBarElement(selector) {
+    let nodes = document.querySelectorAll(selector);
+    return Array.from(nodes).find(e => checkDisplayNotNone(e) && checkAreNotHidden(e));
 }
 
 function checkAreNotHidden(e) {
@@ -58,17 +60,17 @@ function checkDisplayNotNone(e) {
 function resetAfterTimeout() {
     if (!resetTimeoutID) {
         resetTimeoutID = setTimeout(() => {
-            resetIsCtrlPressed();
+            resetIsCtrlPressedTimeout();
         }, resetTimeoutTimeInMs);
     }
 }
 
-function resetIsCtrlPressed() {
+function resetIsCtrlPressedTimeout() {
     const id = resetTimeoutID;
     resetTimeoutID = undefined;
     isCtrlPressed = false;
     clearTimeout(id);
 }
 
-document.onkeydown = keyDownEvent;
-document.onkeyup = keyUpEvent;
+document.addEventListener('keydown', keyDownEvent, { capture: true });
+document.addEventListener('keyup', keyUpEvent, { capture: true });
