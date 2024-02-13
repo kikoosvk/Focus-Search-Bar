@@ -33,7 +33,10 @@ function keyUpEvent(e) {
 }
 
 function getSearchBarElement() {
-    let bar = getVisibleSearchBarElement('[type="search"]');
+    let bar = getSpecificSearchElement();
+    if (!bar) {
+        bar = getVisibleSearchBarElement('[type="search"]');
+    }
     if (!bar) {
         bar = getVisibleSearchBarElement('[type="text"]');
     }
@@ -41,6 +44,13 @@ function getSearchBarElement() {
         bar = getVisibleSearchBarElement('[autocomplete="off"]');
     }
     return bar;
+}
+
+function getSpecificSearchElement() {
+    if (window.location.hostname.includes("google")) {
+        return document.querySelectorAll('[autocomplete="off"]')[1];
+    }
+    return undefined;
 }
 
 function getVisibleSearchBarElement(selector) {
