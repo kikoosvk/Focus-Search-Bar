@@ -5,6 +5,29 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { delimiter, isAbsolute, join } from 'node:path';
 
+// Serve an observation-only fixture for exercising the actual unpacked extension.
+// No production script is injected and no browser profile is changed here.
+if (process.argv.includes('--manual')) {
+    const body = await readFile(new URL('./manual.html', import.meta.url));
+    const server = createServer((request, response) => {
+        const isFixture = new URL(request.url, 'http://localhost').pathname === '/';
+        response.writeHead(isFixture ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8' });
+        response.end(isFixture ? body : 'Not found');
+    });
+    await new Promise((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(0, '127.0.0.1', resolve);
+    });
+    console.log(`Manual fixture: http://localhost:${server.address().port}/`);
+    console.log('Load the unpacked extension in an isolated Chrome profile. Ctrl+C stops this server.');
+    await new Promise(resolve => {
+        process.once('SIGINT', resolve);
+        process.once('SIGTERM', resolve);
+    });
+    await new Promise(resolve => server.close(resolve));
+    process.exit(0);
+}
+
 const browserCandidates = process.env.CHROME_BIN ? [process.env.CHROME_BIN] : [
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     'google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser',

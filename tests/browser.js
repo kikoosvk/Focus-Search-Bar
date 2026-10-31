@@ -12,6 +12,8 @@
         fixture.innerHTML = html;
     }
 
+    const inject = () => (0, eval)(contentScriptSource);
+
     function test(name, run) {
         try {
             run();
@@ -283,7 +285,6 @@
     test('Each script execution focuses and selects once, including after DOM changes', () => {
         let focusCalls = 0;
         let selectCalls = 0;
-        const inject = () => (0, eval)(contentScriptSource);
         for (let replacement = 0; replacement < 2; replacement++) {
             scene('<button id="previous">Previous</button><input type="search" id="field" value="hello">');
             const field = byId('field');
@@ -301,6 +302,102 @@
                 assert(field.selectionStart === 0 && field.selectionEnd === 5, 'Text was not selected');
             }
         }
+    });
+
+    test('A newly inserted search field waits for the next invocation', () => {
+        scene('<input id="previous" value="unrelated text">');
+        byId('previous').focus();
+        inject();
+        assert(document.activeElement === byId('previous'), 'Empty invocation moved focus');
+        fixture.insertAdjacentHTML('beforeend', '<input type="search" id="field" value="new search">');
+        assert(document.activeElement === byId('previous'), 'Insertion moved focus');
+        inject();
+        const field = byId('field');
+        assert(document.activeElement === field, 'Inserted field was not focused');
+        assert(field.selectionStart === 0 && field.selectionEnd === field.value.length,
+            'Inserted field text was not selected');
+    });
+
+    for (const attribute of ['hidden', 'disabled', 'inert']) {
+        test(`Each invocation rechecks a candidate's ${attribute} state`, () => {
+            scene('<button id="previous">Previous</button><input type="search" id="first"><input type="search" id="second">');
+            for (const blocked of [false, true, false]) {
+                byId('first').toggleAttribute(attribute, blocked);
+                byId('previous').focus();
+                inject();
+                assert(document.activeElement === byId(blocked ? 'second' : 'first'),
+                    `Incorrect target with ${attribute}=${blocked}`);
+            }
+        });
+    }
+
+    test('Same-document navigation uses the replacement search field', () => {
+        const originalUrl = location.href;
+        const originalState = history.state;
+        try {
+            scene('<input type="search" id="old" value="old query">');
+            inject();
+            const oldField = byId('old');
+            assert(document.activeElement === oldField, 'Initial field was not focused');
+            history.pushState({ fixture: true }, '', '?fixture=results');
+            scene('<button id="previous">Previous</button><textarea role="searchbox" id="replacement">new query</textarea>');
+            byId('previous').focus();
+            inject();
+            const replacement = byId('replacement');
+            assert(!oldField.isConnected, 'Old field was not removed');
+            assert(document.activeElement === replacement, 'Replacement field was not focused');
+            assert(replacement.selectionStart === 0 && replacement.selectionEnd === replacement.value.length,
+                'Replacement text was not selected');
+        } finally {
+            history.replaceState(originalState, '', originalUrl);
+            scene('');
+        }
+    });
+
+    for (const tag of ['input', 'textarea']) {
+        test(`Selecting ${tag} preserves its value without editing or submitting`, () => {
+            scene(`<form><${tag} id="field" aria-label="Search"></${tag}><button>Submit</button></form>`);
+            const field = byId('field');
+            const value = tag === 'textarea' ? 'first line\nsecond line 🔎' : 'search café 🔎';
+            field.value = value;
+            const events = [];
+            for (const type of ['input', 'change', 'submit']) {
+                field.form.addEventListener(type, event => {
+                    event.preventDefault();
+                    events.push(type);
+                });
+            }
+            inject();
+            assert(document.activeElement === field, 'Search was not focused');
+            assert(field.value === value, 'Selection changed the value');
+            assert(field.selectionStart === 0 && field.selectionEnd === value.length,
+                'Text was not fully selected');
+            field.blur(); // A change event may be deferred until blur.
+            assert(events.length === 0, `Unexpected events: ${events}`);
+        });
+
+        test(`No-search invocation preserves ${tag} focus and partial selection`, () => {
+            scene(`<${tag} id="previous"></${tag}><input type="search" hidden>`);
+            const previous = byId('previous');
+            previous.value = 'unrelated text';
+            previous.focus();
+            previous.setSelectionRange(2, 7, 'backward');
+            inject();
+            assert(document.activeElement === previous, 'Existing focus was lost');
+            assert(previous.selectionStart === 2 && previous.selectionEnd === 7 &&
+                previous.selectionDirection === 'backward', 'Existing selection was changed');
+        });
+    }
+
+    test('Fallback skips a candidate detached by an earlier focus attempt', () => {
+        scene('<input type="search" id="first"><input type="search" id="second"><input type="search" id="third">');
+        const second = byId('second');
+        let detachedFocusCalls = 0;
+        second.focus = () => { detachedFocusCalls++; };
+        byId('first').focus = () => { second.remove(); };
+        inject();
+        assert(document.activeElement === byId('third'), 'Fallback did not reach the connected candidate');
+        assert(detachedFocusCalls === 0, 'Attempted to focus a detached candidate');
     });
 
     for (const [name, options] of [

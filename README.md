@@ -65,3 +65,8 @@ hostname cases pass hostnames into the internal detection helper; they do not
 visit Google. Synthetic keyboard events check that no document shortcut listener
 remains. Tests do not load the installed extension or verify operating-system
 shortcut delivery, actual worker wake-up, or live-site compatibility.
+
+For installed-extension testing, `node tests/run-browser-tests.mjs --manual`
+serves an observation-only fixture on loopback until Ctrl+C. It does not launch
+Chrome, install the extension, or invoke its code. Open the printed URL in an
+isolated Chrome profile with the unpacked extension loaded.

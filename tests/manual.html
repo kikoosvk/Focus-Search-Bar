@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Focus Search Bar manual integration fixture</title>
+<style>
+    body { font: 16px system-ui; max-width: 850px; margin: 32px auto; }
+    button, input, textarea { font: inherit; margin: 8px; padding: 8px; }
+    :focus { outline: 3px solid #1264c3; }
+    pre { white-space: pre-wrap; background: #eee; padding: 16px; }
+</style>
+<h1>Installed extension fixture</h1>
+<p>This page does not load the extension script or simulate activation. Use the
+installed extension's toolbar button or Chrome shortcut. The status below is
+observation only, not an automatic pass.</p>
+<nav aria-label="Fixture controls">
+    <button id="reset">Reset input</button>
+    <button id="insert">Insert search</button>
+    <button id="replace">Replace with textarea</button>
+    <button id="navigate">SPA replacement</button>
+    <button id="remove">No search</button>
+    <button id="login">Login only</button>
+</nav>
+<label>Unrelated field <input id="previous" value="unrelated text"></label>
+<main id="fixture"></main>
+<pre id="status" aria-live="polite"></pre>
+<script>
+    const fixture = document.getElementById('fixture');
+    const status = document.getElementById('status');
+    const events = { input: 0, change: 0, submit: 0 };
+    let revision = 0;
+    const searchInput = () => `<label>Search <input id="search-${++revision}" type="search" value="existing query"></label>`;
+    function render() {
+        const field = document.activeElement;
+        status.textContent = `Active: ${field.id || field.tagName}\n` +
+            `Value: ${JSON.stringify(field.value ?? '')}\n` +
+            `Selection: ${field.selectionStart ?? '-'}..${field.selectionEnd ?? '-'}\n` +
+            `Events: ${JSON.stringify(events)}\nPath: ${location.pathname}${location.search}`;
+    }
+    function scene(html) {
+        fixture.innerHTML = html;
+        for (const type of Object.keys(events)) events[type] = 0;
+        render();
+    }
+    document.getElementById('reset').onclick = () => scene(searchInput());
+    document.getElementById('insert').onclick = () => {
+        if (!fixture.querySelector('[type="search"], textarea')) {
+            fixture.insertAdjacentHTML('beforeend', searchInput());
+        }
+    };
+    document.getElementById('replace').onclick = () => scene(
+        `<label>Search <textarea id="textarea-${++revision}">first line\nsecond line</textarea></label>`);
+    document.getElementById('navigate').onclick = () => {
+        history.pushState({ revision: ++revision }, '', `?view=${revision}`);
+        scene(searchInput());
+    };
+    window.addEventListener('popstate', () => scene(searchInput()));
+    document.getElementById('remove').onclick = () => scene('<p>No search controls.</p>');
+    document.getElementById('login').onclick = () => scene(
+        '<form id="login-form"><label>Username <input id="username" autocomplete="username"></label>' +
+        '<label>Password <input id="password" type="password" autocomplete="current-password"></label></form>');
+    for (const type of Object.keys(events)) document.addEventListener(type, event => {
+        if (type === 'submit') event.preventDefault();
+        events[type]++;
+        render();
+    });
+    for (const type of ['focusin', 'focusout', 'selectionchange']) {
+        document.addEventListener(type, () => requestAnimationFrame(render));
+    }
+    scene(searchInput());
+</script>
+</html>
