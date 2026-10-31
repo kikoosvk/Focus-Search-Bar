@@ -1,33 +1,3 @@
-let isCtrlPressed = false;
-const CTRL_KEY = 'Control';
-const SPACE_KEY_CODE = 'Space';
-const resetTimeoutTimeInMs = 2500;
-let resetTimeoutID;
-
-function keyDownEvent(e) {
-    if (e.key === CTRL_KEY) {
-        isCtrlPressed = true;
-        resetAfterTimeout();
-        return;
-    }
-    if (e.code === SPACE_KEY_CODE && e.ctrlKey) {
-        e.preventDefault();
-    }
-}
-
-function keyUpEvent(e) {
-    if (e.key === CTRL_KEY) {
-        setTimeout(() => {
-            resetIsCtrlPressedTimeout();
-        }, 150);
-        return;
-    }
-    if (e.code === SPACE_KEY_CODE && isCtrlPressed === true) {
-        focusSearchField();
-        isCtrlPressed = false;
-    }
-}
-
 function hasSearchWords(value) {
     const words = (value || '')
         .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
@@ -128,20 +98,4 @@ function focusSearchField(hostname = window.location.hostname) {
     }
 }
 
-function resetAfterTimeout() {
-    if (!resetTimeoutID) {
-        resetTimeoutID = setTimeout(() => {
-            resetIsCtrlPressedTimeout();
-        }, resetTimeoutTimeInMs);
-    }
-}
-
-function resetIsCtrlPressedTimeout() {
-    const id = resetTimeoutID;
-    resetTimeoutID = undefined;
-    isCtrlPressed = false;
-    clearTimeout(id);
-}
-
-document.addEventListener('keydown', keyDownEvent, { capture: true });
-document.addEventListener('keyup', keyUpEvent, { capture: true });
+focusSearchField();

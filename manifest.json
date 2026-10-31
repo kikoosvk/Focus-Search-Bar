@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Focus Search Bar",
-  "description": "Focus Search Bar extension will focus the search bar element on a website after pressing the keyboard shortcut CTRL + SPACE.",
+  "description": "Focus and select the page’s search field using a customizable keyboard shortcut or the toolbar button.",
   "version": "1.0.7",
   "short_name": "FSB",
   "icons": {
@@ -16,18 +16,23 @@
       "32": "img/icon/icon32.png",
       "48": "img/icon/icon48.png",
       "128": "img/icon/icon128.png"
-    }
+    },
+    "default_title": "Focus the page’s search field"
   },
-  "content_scripts": [
-    {
-      "run_at": "document_start",
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "js/content.js"
-      ]
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "js/service-worker.js"
+  },
+  "commands": {
+    "focus-search-field": {
+      "suggested_key": {
+        "default": "Ctrl+Space",
+        "mac": "MacCtrl+Space"
+      },
+      "description": "Focus the page’s search field"
     }
-  ]
+  }
 }

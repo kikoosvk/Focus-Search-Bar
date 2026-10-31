@@ -8,7 +8,6 @@
     }
 
     function scene(html) {
-        resetIsCtrlPressedTimeout();
         document.activeElement?.blur();
         fixture.innerHTML = html;
     }
@@ -281,29 +280,46 @@
         return event;
     }
 
-    test('Ctrl+Space listeners prevent space, focus and select, and reset their state', () => {
-        scene('<button id="previous">Previous</button><input type="search" id="field" value="hello">');
-        byId('previous').focus();
-        key('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true });
-        const space = key('keydown', { key: ' ', code: 'Space', ctrlKey: true });
-        assert(space.defaultPrevented, 'Ctrl+Space default was not prevented');
-        key('keyup', { key: ' ', code: 'Space', ctrlKey: true });
-        assert(document.activeElement === byId('field'), 'Shortcut did not focus search');
-        assert(byId('field').selectionStart === 0 && byId('field').selectionEnd === 5, 'Shortcut did not select text');
-        byId('previous').focus();
-        key('keyup', { key: ' ', code: 'Space' });
-        assert(document.activeElement === byId('previous'), 'Shortcut state did not reset');
+    test('Each script execution focuses and selects once, including after DOM changes', () => {
+        let focusCalls = 0;
+        let selectCalls = 0;
+        const inject = () => (0, eval)(contentScriptSource);
+        for (let replacement = 0; replacement < 2; replacement++) {
+            scene('<button id="previous">Previous</button><input type="search" id="field" value="hello">');
+            const field = byId('field');
+            const originalFocus = field.focus.bind(field);
+            const originalSelect = field.select.bind(field);
+            field.focus = () => { focusCalls++; originalFocus(); };
+            field.select = () => { selectCalls++; originalSelect(); };
+            for (let repeat = 0; repeat < 2; repeat++) {
+                byId('previous').focus();
+                const before = focusCalls;
+                inject();
+                assert(focusCalls === before + 1 && selectCalls === focusCalls,
+                    'Expected exactly one focus and selection per injection');
+                assert(document.activeElement === field, 'Injected script did not focus current field');
+                assert(field.selectionStart === 0 && field.selectionEnd === 5, 'Text was not selected');
+            }
+        }
     });
 
-    test('Space alone does not focus or prevent default', () => {
-        scene('<button id="previous">Previous</button><input type="search" id="field">');
-        byId('previous').focus();
-        const space = key('keydown', { key: ' ', code: 'Space' });
-        key('keyup', { key: ' ', code: 'Space' });
-        assert(!space.defaultPrevented && document.activeElement === byId('previous'), 'Space alone triggered search');
-    });
+    for (const [name, options] of [
+        ['Ctrl+Space', { key: ' ', code: 'Space', ctrlKey: true }],
+        ['Space', { key: ' ', code: 'Space' }],
+        ['/', { key: '/', code: 'Slash' }]
+    ]) {
+        test(`${name} document events do not activate or prevent default after repeated injection`, () => {
+            scene('<button id="previous">Previous</button><input type="search" id="field">');
+            byId('previous').focus();
+            const events = [];
+            if (options.ctrlKey) events.push(key('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true }));
+            events.push(key('keydown', options), key('keyup', options));
+            if (options.ctrlKey) events.push(key('keyup', { key: 'Control', code: 'ControlLeft' }));
+            assert(events.every(event => !event.defaultPrevented), 'Document event default was prevented');
+            assert(document.activeElement === byId('previous'), 'Document event activated search');
+        });
+    }
 
-    resetIsCtrlPressedTimeout();
     fixture.replaceChildren();
     const failures = results.filter(result => !result.passed);
     document.getElementById('report').textContent = `${results.length - failures.length}/${results.length} passed\n` +

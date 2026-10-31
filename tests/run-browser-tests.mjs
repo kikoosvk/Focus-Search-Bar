@@ -39,6 +39,9 @@ try {
         ['/browser.js', './browser.js', 'text/javascript'],
         ['/content.js', '../js/content.js', 'text/javascript']
     ].map(async ([route, path, type]) => [route, { type, body: await readFile(new URL(path, import.meta.url)) }])));
+    // Re-execute the exact production source in the fixture's global scope.
+    routes.get('/browser.js').body = `const contentScriptSource = ${JSON.stringify(routes.get('/content.js').body.toString())};\n` +
+        routes.get('/browser.js').body;
     server = createServer((request, response) => {
         const resource = routes.get(request.url);
         response.writeHead(resource ? 200 : 404, { 'Content-Type': resource?.type || 'text/plain' });
