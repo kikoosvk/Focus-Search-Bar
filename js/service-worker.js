@@ -21,5 +21,3 @@ chrome.commands.onCommand.addListener((command, tab) => {
         return focusSearchInTab(tab, true);
     }
 });
-
-chrome.action.onClicked.addListener(tab => focusSearchInTab(tab));

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Focus Search Bar",
-  "description": "Focus and select the page’s search field using a customizable keyboard shortcut or the toolbar button.",
+  "description": "Focus and select the page’s search field using a customizable keyboard shortcut.",
   "version": "1.0.8",
   "short_name": "FSB",
   "icons": {
@@ -17,7 +17,8 @@
       "48": "img/icon/icon48.png",
       "128": "img/icon/icon128.png"
     },
-    "default_title": "Focus the page’s search field"
+    "default_title": "View or change your shortcut",
+    "default_popup": "popup.html"
   },
   "permissions": [
     "activeTab",

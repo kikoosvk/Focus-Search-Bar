@@ -1,9 +1,9 @@
 # Focus Search Bar privacy
 
-When you activate Focus Search Bar using its shortcut or toolbar button, it
+When you activate Focus Search Bar using its keyboard shortcut, it
 checks the current page's address and relevant page elements, including field
 attributes, labels, and visibility, to find and focus a search field. This
-processing happens locally on your device, only when you activate the extension.
+processing happens locally on your device, only when you invoke that command.
 
 The extension does not save this information or send it to the developer or
 third parties. It does not record your browsing history, copy selected search

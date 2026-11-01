@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Focus Search Bar</title>
+    <link rel="stylesheet" href="css/popup.css">
+    <script src="js/popup.js" defer></script>
+</head>
+<body>
+    <header>
+        <img src="img/icon/icon48.png" width="32" height="32" alt="">
+        <h1>Focus Search Bar</h1>
+    </header>
+    <main>
+        <section aria-live="polite" aria-atomic="true" aria-busy="true" id="shortcut-status">
+            <h2 id="shortcut-heading">Checking shortcut…</h2>
+            <p id="shortcut-description"></p>
+        </section>
+        <button id="shortcut-settings" type="button" aria-describedby="settings-help" disabled>Open shortcut settings</button>
+        <p id="settings-help">In Chrome’s settings, edit <strong>“Focus the page’s search field.”</strong></p>
+        <p id="settings-error" role="alert" hidden></p>
+    </main>
+</body>
+</html>

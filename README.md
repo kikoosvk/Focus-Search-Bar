@@ -1,142 +1,100 @@
 # Focus Search Bar
 
-Focus Search Bar focuses a suitable search field on the current page and attempts
-to select its existing text. It does not enter a query or submit a search.
+Jump to a page's search field with a keyboard shortcut. Focus Search Bar focuses
+a suitable field and selects its existing text so you can start typing. It does
+not enter a query or submit a search.
 
-Press **Ctrl+Space** (Control, including on macOS), or click the extension's
-toolbar button. Both perform the same action; the toolbar button opens no popup.
-You can pin Focus Search Bar through Chrome's Extensions menu for easy access.
-The extension runs only when invoked, on HTTP/HTTPS pages. Chrome internal pages,
-the Chrome Web Store, and other restricted pages cannot be scripted; invoking the
-extension there has no effect. If no suitable field can be focused, it takes no
-further action.
+The suggested shortcut is **Ctrl+Space** (**Control+Space** on Mac). Click the
+extension's toolbar icon to see your assigned shortcut or change it.
 
-## Install an unpacked copy
+## Set or change your shortcut
 
-1. Clone this repository, or download and extract its source archive.
-2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
-3. Click **Load unpacked** and select the repository root containing `manifest.json`.
-4. Open an ordinary HTTP/HTTPS page with a search field and invoke the extension.
+Click the toolbar icon, then **Change shortcut** or **Set shortcut**. Find
+**Focus Search Bar** in Chrome's shortcut settings and enter your preferred
+combination. You can also open `chrome://extensions/shortcuts` directly.
 
-For development, edit the local files and click **Reload** on the extension's
-card at `chrome://extensions`. Refresh the page before checking the changes.
-When upgrading from the previous implementation, reload existing web pages as
-well as the extension to clear the old injected keyboard listeners.
-
-## Change the shortcut
-
-Open `chrome://extensions/shortcuts`, find **Focus Search Bar**, and edit or clear
-**Focus the page’s search field**. Chrome manages the binding; after remapping,
-the old shortcut no longer activates this extension. The toolbar button also
-works when no shortcut is assigned. Bare `/` activation is not supported.
-
-The shortcut is a suggested default and may be unassigned if it conflicts with
-another binding. It works while Chrome has focus.
+If no shortcut is assigned, the popup displays **No shortcut assigned**.
 
 ## Troubleshooting
 
-If the shortcut does nothing, try the toolbar button on the same page. If that
-works, check the assignment at `chrome://extensions/shortcuts` and choose a
-different combination if needed. OS/browser shortcuts and other extensions can
-conflict with the suggested default. In particular, macOS may use Control+Space
-to switch input sources
-([Apple keyboard shortcuts](https://support.apple.com/en-ie/102650)). If the
-shortcut is unassigned or intercepted, choose another combination on Chrome's
-shortcuts page. On macOS the default uses **Control**, not Command.
-
-If neither activation method works, confirm that the extension is enabled and
-the page has a suitable search field. `chrome://` pages, the Chrome Web Store,
-and other Chrome-restricted pages cannot be scripted. Non-HTTP/HTTPS URLs,
-including `file://` pages, are skipped. Restricted-page failures are silent;
-there is no error popup. The detection limitations below can also explain why a
-field is not focused.
-
-## Search detection and limitations
-
-Detection prefers Google's `name="q"` controls on exactly `google.com` and
-`www.google.com`, then search inputs/roles, search containers/forms, and clear
-search wording in field attributes or labels. Candidates are tried in document
-order within each priority group. Hidden, disabled, inert, read-only, and
-unsupported controls are skipped, and unsuccessful focus attempts fall through
-to the next candidate.
-
-Generic detection recognizes the English tokens `search` and `searchbox`,
-including punctuation and camel-case boundaries. An arbitrary text field,
-`autocomplete="off"`, or a name such as `q` or `query` alone is insufficient.
-Country-specific Google domains use generic detection. Custom editable widgets,
-iframes, and Shadow DOM are not supported.
+- If the shortcut does nothing, check its assignment and make sure Chrome has
+  focus. Try a different combination if it conflicts with another extension or
+  an operating-system shortcut. On Mac, Control+Space may switch input sources.
+- The page must have a suitable search field. Chrome internal pages, the Chrome
+  Web Store, and non-HTTP/HTTPS pages are not supported.
+- Detection depends on the page's markup. Generic wording detection uses English
+  search terms. Custom editable widgets, fields inside iframes, and Shadow DOM
+  are not supported.
+- After upgrading from the old implementation, refresh already-open pages to
+  clear its keyboard listeners.
 
 ## Privacy
 
-The extension accesses and processes relevant page information locally only
-when invoked. It does not persistently store, log, or transmit that information.
-See [Privacy](PRIVACY.md) for the information accessed and permission explanations.
+Page information is processed locally when you use the shortcut. The extension
+does not save, log, or transmit it. See [Privacy](PRIVACY.md).
 
-## Regression tests
+## Install and develop locally
+
+1. Clone this repository or download and extract its source archive.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. Click **Load unpacked** and select the folder containing `manifest.json`.
+4. Check your shortcut through the toolbar icon, then try it on a page with a
+   search field.
+
+After editing extension files, click **Reload** on its card at
+`chrome://extensions` and refresh the page being tested.
+
+## Tests
 
 Requires Node.js 18+ and an installed Chrome or Chromium browser. No npm packages
-or downloaded browser are required. From the repository root, run:
+or browser download are required. From the repository root:
 
 ```sh
-node --test tests/service-worker.test.mjs
+node --test tests/*.test.mjs
 node tests/run-browser-tests.mjs
 ```
 
-The runner finds common browser installations, or accepts an explicit executable:
+If the browser is not detected automatically:
 
 ```sh
 CHROME_BIN="/path/to/chrome" node tests/run-browser-tests.mjs
 ```
 
-It serves local fixtures on loopback, launches headless Chrome with a temporary
-profile, checks reported results, and cleans up. Failures, missing browsers,
-missing results, and timeouts produce a nonzero exit code.
+Node tests use mocked Chrome APIs. Browser tests check detection, focus, and
+selection on local fixtures in headless Chrome with a temporary profile. They
+do not install the extension or verify live websites or OS shortcut delivery.
 
-Node tests check the manifest and service-worker routing with mocked Chrome APIs,
-including missing tabs, injection failures, and synchronous event registration.
-The browser tests use real layout, focus, and text selection, and repeatedly
-execute the production focus script. Google
-hostname cases pass hostnames into the internal detection helper; they do not
-visit Google. Synthetic keyboard events check that no document shortcut listener
-remains. Tests do not load the installed extension or verify operating-system
-shortcut delivery, actual worker wake-up, or live-site compatibility.
+For a local page to test the installed extension:
 
-For installed-extension testing, `node tests/run-browser-tests.mjs --manual`
-serves an observation-only fixture on loopback until Ctrl+C. It does not launch
-Chrome, install the extension, or invoke its code. Open the printed URL in an
-isolated Chrome profile with the unpacked extension loaded.
+```sh
+node tests/run-browser-tests.mjs --manual
+```
 
-### Recorded result
+Open the printed URL in a separate Chrome profile with the extension loaded.
+The page only reports what happens; it does not activate the extension itself.
+Check shortcut activation, remapping, and the popup's assigned/unassigned states.
+Stop the server with Ctrl+C.
 
-On 2026-10-31, at source commit `bbb0912`, both commands above passed:
+Recorded on 2026-11-01: **26/26 Node tests and 154/154 browser tests passed** with
+Node.js 24.18.0 and Chrome 156.0.8078.74 on macOS ARM64. Manual checks also passed
+for popup states, settings navigation, keyboard accessibility, and remapped
+shortcuts. Default Control+Space delivery, other operating systems, and
+Store-managed upgrades were not verified.
 
-| Check | Result |
-| --- | --- |
-| Service-worker and manifest tests | 13/13 passed |
-| Browser regression fixtures | 154/154 passed |
+## Package a local release candidate
 
-Environment: Node.js 24.18.0, Google Chrome 156.0.8078.74, macOS ARM64.
-These are results for the test methods described above, not a browser-version
-support guarantee.
-
-## Prepare a local release candidate
-
-Packaging requires Python 3.8+ and uses only its standard library. Run the
-regression tests above first, then:
+Requires Python 3.8+ with no additional dependencies. Run the tests above, then:
 
 ```sh
 python3 scripts/package-release.py
 ```
 
-The script validates the release inputs, creates
-`dist/focus-search-bar-1.0.8-rc.zip` and its `.zip.sha256` checksum, and verifies
-the archive. The filename is derived from the manifest version. To use another
-output directory, pass `--output-dir /path/to/output`.
+This creates `dist/focus-search-bar-<version>-rc.zip` and its `.zip.sha256`
+checksum using the manifest version. Use `--output-dir /path/to/output` to
+choose another location.
 
-Only the manifest, two runtime scripts, four icons, and license are included.
-Entries use fixed metadata and no compression, so unchanged inputs produce
-identical ZIP bytes. Packaging validates file structure and configuration; it
-does not run the regression suites or install the extension in Chrome.
-
-Version **1.0.8 is an unverified release candidate**, pending developer manual
-checks.
+The package includes the manifest, runtime scripts, popup HTML/CSS, icons, and
+license. Tests and development files are excluded. Fixed ZIP metadata makes
+unchanged inputs produce identical packages. The script validates the archive
+but does not install or publish it. To test the actual package, extract the ZIP
+and load that extracted folder through **Load unpacked**.

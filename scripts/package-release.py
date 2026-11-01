@@ -16,6 +16,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 ICONS = {str(size): "img/icon/icon{}.png".format(size) for size in (16, 32, 48, 128)}
 FILES = tuple(sorted(("manifest.json", "js/content.js", "js/service-worker.js",
+                      "popup.html", "css/popup.css", "js/popup.js",
                       "LICENSE", *ICONS.values())))
 STAMP = (1980, 1, 1, 0, 0, 0)
 
@@ -67,7 +68,8 @@ def validate(files):
     }, "Unexpected command configuration")
     require(manifest["icons"] == ICONS, "Unexpected icon references")
     require(manifest["action"] == {
-        "default_icon": ICONS, "default_title": "Focus the page’s search field"
+        "default_icon": ICONS, "default_title": "View or change your shortcut",
+        "default_popup": "popup.html"
     }, "Unexpected toolbar action configuration")
     for size, name in ICONS.items():
         data = files[name]
