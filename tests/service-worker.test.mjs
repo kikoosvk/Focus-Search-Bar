@@ -38,7 +38,11 @@ function worker({ tabs = [currentTab], queryError, injectionError } = {}) {
 
 test('manifest exposes one browser-managed command and only on-demand permissions', () => {
     assert.equal(manifest.manifest_version, 3);
-    assert.equal(manifest.version, '1.0.7');
+    assert.match(manifest.version, /^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){0,3}$/);
+    const versionParts = manifest.version.split('.').map(Number);
+    assert.equal(versionParts.join('.'), manifest.version, 'Version must use canonical numeric components');
+    assert.ok(versionParts.every(part => part <= 65535), 'Version components must be at most 65535');
+    assert.ok(versionParts.some(part => part > 0), 'Version must not be all zero');
     assert.deepEqual(manifest.commands, {
         'focus-search-field': {
             suggested_key: { default: 'Ctrl+Space', mac: 'MacCtrl+Space' },

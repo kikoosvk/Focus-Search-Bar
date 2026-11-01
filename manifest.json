@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Focus Search Bar",
   "description": "Focus and select the page’s search field using a customizable keyboard shortcut or the toolbar button.",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "short_name": "FSB",
   "icons": {
     "16": "img/icon/icon16.png",
